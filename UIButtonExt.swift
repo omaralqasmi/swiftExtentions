@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 extension UIButton {
 /**
@@ -12,7 +13,7 @@ extension UIButton {
      * USAGE:
       
           1. Connect a button as outlet
-          2. In viewDidLoad add action to the button using this function
+          2. In viewDidLoad add action to the button by using a clouser or a function
        
      * EXAMPLES:
        
@@ -20,18 +21,18 @@ extension UIButton {
          ````
          btn.setActionExt(action: { [self] in
           print("EXECUTE THE BUTTON ACTION")
-         }, animations: [.fade])
+         }, animations: [.fade], feedback: .soft)
          ````
 
          using a function:
          ````
-         btn.setActionExt(action: sampleFunction, animations: [.scale])
+         btn.setActionExt(action: sampleFunction, animations: [.scale], feedback: .soft)
          func sampleFunction() {
           print("EXECUTE THE BUTTON ACTION")
          }
          ````
 
-         without animations:
+         without animations and feedback:
          ````
          btn.setActionExt(action: sampleFunction)
          ````
@@ -46,7 +47,7 @@ extension UIButton {
          }
          
          func addActionsToButtons(){
-             btn.setActionExt(action: sampleFunction, animations: [.fade, .scale])
+             btn.setActionExt(action: sampleFunction, animations: [.fade, .scale], feedback: .soft)
          }
          
          func sampleFunction() {
@@ -115,46 +116,53 @@ extension UIButton {
      - Parameters:
          - action: select a local function to be excecuted when button clicked
          - animations: add an array of button animations ex. [.fade, .scale], Default animation types none = no animation,  scale = shrink the button on touchDown, fade = reduce the button opacity on touchDown
-      
+         - feedback: add a haptic feedback to touchDown
+
      - Author:
          Omar Al Qasmi
      - Version:
          1.0
 */
     
-    func setActionExt(action: @escaping () -> Void, animations: [ButtonAnimationType] = [.none])  {
+    func setActionExt(action: @escaping () -> Void, animations: [ButtonAnimationType] = [.none], feedback: VibrationFeedback = .none)  {
         //Logging
-        let logging: Bool = false
+        let logging: Bool = true
         
         //MARK: - ADD Touch events to the UIButton
-        self.addAction(UIAction(handler: down), for: .touchDown)
-        self.addAction(UIAction(handler: up), for: .touchUpInside)
-        self.addAction(UIAction(handler: exit), for: .touchDragExit)
-        self.addAction(UIAction(handler: upOutside), for: .touchUpOutside)
-        self.addAction(UIAction(handler: cancel), for: .touchCancel)
+        self.addAction(UIAction(handler: touchDown), for: .touchDown)
+        self.addAction(UIAction(handler: touchUpInside), for: .touchUpInside)
+        self.addAction(UIAction(handler: touchDragExit), for: .touchDragExit)
+        self.addAction(UIAction(handler: touchDragEnter), for: .touchDragEnter)
+        self.addAction(UIAction(handler: touchUpOutside), for: .touchUpOutside)
+        self.addAction(UIAction(handler: touchCancel), for: .touchCancel)
         
         //MARK: - Nested functions to handle touch events
         //Handlers
-        func down(_: UIAction) {
-            if logging {print("button touch down")}
+        func touchDown(_: UIAction) {
+            printLogs("button touchDown")
+            touchDownFeedBack(feedback)
             downAnimation()
         }
-        func up(_: UIAction) {
-            if logging {print("button touch up")}
+        func touchUpInside(_: UIAction) {
+            printLogs("button touchUpInside")
             upAnimation()
             //Execute Action
-            if logging {print("button Execute Action")}
+            printLogs("button Execute Action")
             action()
         }
-        func exit(_: UIAction) {
-            if logging {print("button touch exit")}
-        }
-        func upOutside(_: UIAction) {
-            if logging {print("button touch up outside")}
+        func touchDragExit(_: UIAction) {
+            printLogs("button touchDragExit")
             upAnimation()
         }
-        func cancel(_: UIAction) {
-            if logging {print("button touch cancel")}
+        func touchDragEnter(_: UIAction) {
+            printLogs("button touchDragEnter")
+            downAnimation()
+        }
+        func touchUpOutside(_: UIAction) {
+            printLogs("button touch touchUpOutside")
+        }
+        func touchCancel(_: UIAction) {
+            printLogs("button touchCancel")
             upAnimation()
         }
         //Start animating
@@ -162,12 +170,12 @@ extension UIButton {
             for anim in animations {
                 switch anim {
                 case .none:
-                    if logging {print("button down animation => none")}
+                    printLogs("button down animation => none")
                 case .fade:
-                    if logging {print("button down animation => fade")}
+                    printLogs("button down animation => fade")
                     self.touchDownAnimAlpha()
                 case .scale:
-                    if logging {print("button down animation => scale")}
+                    printLogs("button down animation => scale")
                     self.touchDownAnimScale()
                 }
             }
@@ -176,40 +184,45 @@ extension UIButton {
             for anim in animations {
                 switch anim {
                 case .none:
-                    if logging {print("button up animation => none")}
+                    printLogs("button up animation => none")
                 case .fade:
-                    if logging {print("button up animation => fade")}
+                    printLogs("button up animation => fade")
                     self.touchUpAnimAlpha()
                 case .scale:
-                    if logging {print("button up animation => scale")}
+                    printLogs("button up animation => scale")
                     self.touchUpAnimScale()
                 }
 
+            }
+        }
+        //Debug logging
+        func printLogs(_ msg: String){
+            if logging {
+                print(msg)
             }
         }
     }
     
     //MARK: - UIButton touch animations
     func touchDownAnimScale() {
-        
         UIView.animate(withDuration: 0.05, delay: 0) {
             self.transform = .init(scaleX: 0.95, y: 0.95)
         }
     }
+    
     func touchUpAnimScale() {
-        
-        UIView.animate(withDuration: 0.2, delay: 0) {
+        UIView.animate(withDuration: 0.2, delay: 0.05) {
             self.transform = .init(scaleX: 1, y: 1)
         }
     }
+    
     func touchDownAnimAlpha() {
-        
         UIView.animate(withDuration: 0.05, delay: 0) {
             self.alpha = 0.5
         }
     }
+    
     func touchUpAnimAlpha() {
-        
         UIView.animate(withDuration: 0.2, delay: 0) {
             self.alpha = 1
         }
@@ -221,6 +234,53 @@ extension UIButton {
         case scale
         case fade
     }
-
+    
+    //MARK: - Vibration feedback
+    //Inspired by muhasturk answer - https://stackoverflow.com/questions/26455880/how-to-make-iphone-vibrate-using-swift/57162220
+    enum VibrationFeedback {
+        case none
+        case error
+        case success
+        case warning
+        case light
+        case medium
+        case heavy
+        @available(iOS 13.0, *)
+        case soft
+        @available(iOS 13.0, *)
+        case rigid
+        case selection
+        case oldSchool
+    }
+    func touchDownFeedBack(_ vibrationType : VibrationFeedback) {
+        switch vibrationType {
+        case .none:
+            break
+        case .error:
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+        case .success:
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case .warning:
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        case .light:
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        case .medium:
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        case .heavy:
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        case .soft:
+            if #available(iOS 13.0, *) {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            }
+        case .rigid:
+            if #available(iOS 13.0, *) {
+                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+            }
+        case .selection:
+            UISelectionFeedbackGenerator().selectionChanged()
+        case .oldSchool:
+            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+        }
+    }
 
 }
