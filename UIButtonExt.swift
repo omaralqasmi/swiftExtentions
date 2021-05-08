@@ -126,7 +126,7 @@ extension UIButton {
     
     func setActionExt(action: @escaping () -> Void, animations: [ButtonAnimationType] = [.none], feedback: VibrationFeedback = .none)  {
         //Logging
-        let logging: Bool = true
+        let logging: Bool = false
         
         //MARK: - ADD Touch events to the UIButton
         self.addAction(UIAction(handler: touchDown), for: .touchDown)
@@ -140,7 +140,7 @@ extension UIButton {
         //Handlers
         func touchDown(_: UIAction) {
             printLogs("button touchDown")
-            touchDownFeedBack(feedback)
+            UIDevice.touchDownFeedBack(feedback)
             downAnimation()
         }
         func touchUpInside(_: UIAction) {
@@ -234,25 +234,29 @@ extension UIButton {
         case scale
         case fade
     }
-    
-    //MARK: - Vibration feedback
-    //Inspired by muhasturk answer - https://stackoverflow.com/questions/26455880/how-to-make-iphone-vibrate-using-swift/57162220
-    enum VibrationFeedback {
-        case none
-        case error
-        case success
-        case warning
-        case light
-        case medium
-        case heavy
-        @available(iOS 13.0, *)
-        case soft
-        @available(iOS 13.0, *)
-        case rigid
-        case selection
-        case oldSchool
-    }
-    func touchDownFeedBack(_ vibrationType : VibrationFeedback) {
+
+}
+
+//MARK: - Vibration feedback
+//Inspired by muhasturk answer - https://stackoverflow.com/questions/26455880/how-to-make-iphone-vibrate-using-swift/57162220
+enum VibrationFeedback {
+    case none
+    case error
+    case success
+    case warning
+    case light
+    case medium
+    case heavy
+    @available(iOS 13.0, *)
+    case soft
+    @available(iOS 13.0, *)
+    case rigid
+    case selection
+    case oldSchool
+}
+
+extension UIDevice {
+    static func touchDownFeedBack(_ vibrationType : VibrationFeedback) {
         switch vibrationType {
         case .none:
             break
@@ -282,5 +286,4 @@ extension UIButton {
             AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
         }
     }
-
 }
